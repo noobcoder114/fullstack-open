@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Persons from './components/Persons'
 import NewPersonForm from './components/NewPersonForm'
 import Filter from './components/Filter'
-import axios from 'axios'
+import phonebookService from './services/phonebook'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
@@ -11,15 +11,21 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('new number')
   const [personsToShow, setPersonsToShow] = useState(persons)
 
-  useEffect(() => {
-    console.log('effect')
-    axios
-        .get('http://localhost:3001/persons')
-        .then(response => {
-            const newPersons = persons.concat(response.data)
+  const renderPersons = () => {
+    phonebookService
+        .getAll()
+        .then(newPersons => {
             setPersons(newPersons)
             setPersonsToShow(newPersons)
+            const newNames = newPersons.map((person) => {
+                return person.name
+            })
+            setNames(newNames)
         })
+  }
+
+  useEffect(() => {
+    renderPersons()
   }, [])
 
   const handleFilter = (event) => {
@@ -39,22 +45,40 @@ const App = () => {
     setNewNumber(event.target.value)
   }
 
+  const handleUpdate = (name, number) => {
+    const person = persons.find(p => p.name === name)
+    const changedPerson = { ...person, number: number}
+
+    phonebookService.update(person.id, changedPerson)
+        .then(() => {
+            renderPersons()
+        })
+  }
+
   const handleNewPerson = (event) => {
     event.preventDefault()
+    console.log(event)
+    console.log(names)
     if (names.includes(newName)) {
-        alert(`${newName} is already added to the phonebook`)
-        return
+        if (window.confirm(`${newName} is already added to the phonebook, replace the old number with a new one?`)) {
+            handleUpdate(newName, newNumber)
+            return
+        }
     }
     setNames(names.concat(newName))
     const newPersonObject = {
         name: newName,
         number: newNumber
     }
-    const newPersons = persons.concat(newPersonObject)
-    setPersons(newPersons)
-    setPersonsToShow(newPersons)
-    setNewName('')
-    setNewNumber('')
+    phonebookService
+        .create(newPersonObject)
+        .then(returnedPerson => {
+            const newPersons = persons.concat(returnedPerson)
+            setPersons(newPersons)
+            setPersonsToShow(newPersons)
+            setNewName('')
+            setNewNumber('')
+        })
   }
 
   return (
@@ -69,7 +93,12 @@ const App = () => {
             handleNumberChange={handleNumberChange}
             onClick={handleNewPerson} />
       <h2>Numbers</h2>
-      <Persons personsToShow={personsToShow} />
+        <Persons 
+            persons={persons} 
+            setPersons={setPersons} 
+            personsToShow={personsToShow} 
+            setPersonsToShow={setPersonsToShow}
+            renderPersons={renderPersons} />
     </div>
   )
 }
