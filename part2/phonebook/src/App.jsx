@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import Persons from './components/Persons'
 import NewPersonForm from './components/NewPersonForm'
 import Filter from './components/Filter'
+import Notification from './components/Notification'
 import phonebookService from './services/phonebook'
+import './index.css'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
@@ -10,6 +12,8 @@ const App = () => {
   const [names, setNames] = useState(['Arto Hellas'])
   const [newNumber, setNewNumber] = useState('new number')
   const [personsToShow, setPersonsToShow] = useState(persons)
+  const [notificationMessage, setNotificationMessage] = useState(null)
+  const [notificationStyle, setNotificationStyle] = useState(null)
 
   const renderPersons = () => {
     phonebookService
@@ -45,7 +49,7 @@ const App = () => {
     setNewNumber(event.target.value)
   }
 
-  const handleUpdate = (name, number) => {
+  const handleUpdateNumber = (name, number) => {
     const person = persons.find(p => p.name === name)
     const changedPerson = { ...person, number: number}
 
@@ -53,15 +57,17 @@ const App = () => {
         .then(() => {
             renderPersons()
         })
+        .catch(() => {
+            setNotificationStyle('red')
+            setNotificationMessage(`The information of ${name} has already been removed from the server`)
+        })
   }
 
   const handleNewPerson = (event) => {
     event.preventDefault()
-    console.log(event)
-    console.log(names)
     if (names.includes(newName)) {
         if (window.confirm(`${newName} is already added to the phonebook, replace the old number with a new one?`)) {
-            handleUpdate(newName, newNumber)
+            handleUpdateNumber(newName, newNumber)
             return
         }
     }
@@ -76,6 +82,11 @@ const App = () => {
             const newPersons = persons.concat(returnedPerson)
             setPersons(newPersons)
             setPersonsToShow(newPersons)
+            setNotificationStyle('green')
+            setNotificationMessage(`${newName} has been added to the phonebook`)
+            setTimeout(() => {
+                setNotificationMessage(null)
+            }, 5000);
             setNewName('')
             setNewNumber('')
         })
@@ -84,6 +95,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+        <Notification message={notificationMessage} style={notificationStyle} />
         <Filter handleFilter={handleFilter} />
       <h2>add a new</h2>
         <NewPersonForm
@@ -98,7 +110,9 @@ const App = () => {
             setPersons={setPersons} 
             personsToShow={personsToShow} 
             setPersonsToShow={setPersonsToShow}
-            renderPersons={renderPersons} />
+            renderPersons={renderPersons}
+            setNotificationMessage={setNotificationMessage}
+            setNotificationStyle={setNotificationStyle} />
     </div>
   )
 }

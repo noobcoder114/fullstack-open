@@ -6,7 +6,11 @@ const Person = (props) => {
         if (window.confirm(`Do you want to delete ${person.name} from the phonebook`)) {
             phonebookService.dlt(id)
                 .then(() => {
-                    alert(`${person.name} has been removed from the phonebook`)
+                    props.setNotificationStyle('green')
+                    props.setNotificationMessage(`${person.name} has been removed from the phonebook`)
+                    setTimeout(() => {
+                        props.setNotificationMessage(null)
+                    }, 5000);
                     props.renderPersons()
         })}
     }
