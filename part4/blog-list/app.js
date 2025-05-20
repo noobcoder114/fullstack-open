@@ -7,7 +7,7 @@ const blogsRouter = require('./controllers/blogs')
 
 const app = express()
 
-const mongoUrl = 'mongodb://localhost/bloglist'
+const mongoUrl = 'mongodb+srv://ryanthr:fullstack@cluster0.boioj03.mongodb.net/blogApp?retryWrites=true&w=majority&appName=Cluster0'
 mongoose
     .connect(mongoUrl)
     .then(() => {
